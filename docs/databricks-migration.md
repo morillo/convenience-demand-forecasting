@@ -78,8 +78,9 @@ Then, in the Databricks panel (its logo in the Activity Bar):
 3. **Bundle Variables** changes `preset` and the other variables for the next deploy.
 
 The "Databricks Connect disabled" status-bar item is expected: the job runs entirely on serverless
-compute, so Databricks Connect is not used. If the extension offers to set up a Python environment for
-Databricks Connect, decline. The project's `.venv` is managed by `uv sync`.
+compute, so Databricks Connect is not used. To stop the extension from offering to rebuild `.venv` for
+Databricks Connect (the project's `.venv` is managed by `uv sync`), add
+`"databricks.python.environmentSetup": "manual"` to your `.vscode/settings.json`.
 
 ## Free Edition limits and how the design copes
 
