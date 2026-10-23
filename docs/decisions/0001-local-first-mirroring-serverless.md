@@ -15,8 +15,21 @@ Mirror the target as closely as a laptop allows, so "works locally" predicts "wo
 
 * **Same versions** as serverless environment 6 (Sep 2026): Python 3.12, Spark 4.2 (Databricks
   Runtime 19), and the library versions preinstalled in its ML base environment: lightgbm
-  4.6.0, pandas 2.3.3, numpy 2.3.4, pyarrow 21.0.0, scipy 1.16.3, mlflow 3.12.0. They are
-  pinned exactly in `pyproject.toml`; Dependabot is told not to bump them one by one.
+  4.6.0, pandas 2.3.3, numpy 2.3.4, pyarrow 21.0.0, scipy 1.16.3. They are pinned exactly in
+  `pyproject.toml`; Dependabot is told not to bump them one by one.
+* **Security beats parity**: serverless environment 6 ships mlflow-skinny 3.12.0, which is
+  affected by a critical and two high-severity advisories (GHSA-7gwp-5pfp-969j,
+  GHSA-2cm6-r77w-6g96, GHSA-gqvg-gmmx-x4hm). MLflow is therefore floored at the fixed release
+  (`>= 3.15.0`) and kept current by Dependabot; the Databricks job installs it over the
+  preinstalled client. MLflow is only the tracking client, so the version gap does not change
+  how the pipeline computes anything. Transitive packages with advisories (`cryptography`,
+  `starlette`) get security floors through `[tool.uv] constraint-dependencies`.
+* **Accepted risk: pyarrow 21.0.0** (PYSEC-2026-113 / GHSA-rgxp-2hwp-jwgg, fixed in 23.0.1): a
+  use-after-free when reading Arrow IPC *files* with pre-buffering. The pipeline never reads
+  IPC files (Spark exchanges Arrow *streams*; tables are Parquet/Delta), serverless environment
+  6 itself ships 21.0.0, and Spark's Python bridge depends on that exact build, so overriding it
+  would risk breaking pandas UDFs on Databricks. CI's dependency audit ignores only this ID; the
+  pin moves to the fixed version with the next serverless environment.
 * **Same API**: local Spark runs behind **Spark Connect** (`SparkSession.builder.remote("local[*]")`),
   the only mode serverless supports. Code that would fail on serverless fails locally first.
 * **Same defaults**: ANSI SQL mode on, session time zone UTC.

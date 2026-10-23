@@ -98,11 +98,15 @@ uv run pytest -m "not e2e"     # skip the end-to-end pipeline run
 uv run ruff check && uv run ruff format --check
 uv run pyright                 # same type checker as VS Code Pylance; must report 0 errors
 uv run pre-commit install      # run the same checks (+ secret scan) on every commit
+uv export --all-groups --no-hashes --no-emit-project -q > /tmp/reqs.txt && \
+  uvx pip-audit -r /tmp/reqs.txt --no-deps --disable-pip --ignore-vuln PYSEC-2026-113   # dependency audit
 ```
 
 CI (`.github/workflows/ci.yml`) runs lint, Pyright, the tests (including the end-to-end pipeline and a
-headless render of the results app), the tiny quickstart in a fresh folder, a wheel build, a secret
-scan and, on pull requests, a dependency review. Library versions deliberately mirror Databricks
+headless render of the results app), the tiny quickstart in a fresh folder, a wheel build, a
+vulnerability audit of every locked dependency, a secret scan and, on pull requests, a dependency
+review. The one accepted advisory (pyarrow, pinned to match serverless) is explained in
+[docs/decisions/0001](docs/decisions/0001-local-first-mirroring-serverless.md). Library versions deliberately mirror Databricks
 serverless environment 6; bump them together, not one by one
 ([docs/decisions/0001](docs/decisions/0001-local-first-mirroring-serverless.md)).
 

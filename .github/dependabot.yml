@@ -9,13 +9,12 @@ updates:
         dependency-type: development
     # These versions deliberately mirror Databricks serverless environment 6 (see
     # docs/decisions/0001-local-first-mirroring-serverless.md). Bump them together, by hand,
-    # when moving to a newer serverless environment version.
+    # when moving to a newer serverless environment version. MLflow is not listed: it
+    # follows security fixes instead.
     ignore:
       - dependency-name: pyspark
       - dependency-name: delta-spark
       - dependency-name: lightgbm
-      - dependency-name: mlflow
-      - dependency-name: mlflow-skinny
       - dependency-name: numpy
       - dependency-name: pandas
       - dependency-name: pandas-stubs

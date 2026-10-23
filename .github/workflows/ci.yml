@@ -42,6 +42,11 @@ jobs:
           uv run dfc run-all --preset tiny --data-dir "$RUNNER_TEMP/quickstart"
       - name: Wheel builds (what the Databricks bundle deploys)
         run: uv build --wheel
+      - name: Audit every locked dependency for known vulnerabilities
+        # PYSEC-2026-113 (pyarrow < 23.0.1) is an accepted risk; see docs/decisions/0001.
+        run: |
+          uv export --all-groups --no-hashes --no-emit-project -q > "$RUNNER_TEMP/requirements.txt"
+          uvx pip-audit -r "$RUNNER_TEMP/requirements.txt" --no-deps --disable-pip --ignore-vuln PYSEC-2026-113
 
   secrets:
     name: Secret scan (Gitleaks)
