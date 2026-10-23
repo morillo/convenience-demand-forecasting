@@ -23,3 +23,5 @@ build/
 
 # Databricks CLI / bundle state
 .databricks/
+# Per-machine workspace host for the VS Code extension (docs/databricks-migration.md)
+resources/workspace.local.yml

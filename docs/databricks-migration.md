@@ -33,7 +33,8 @@ Prerequisites: the [Databricks CLI](https://docs.databricks.com/aws/en/dev-tools
    ```bash
    databricks bundle deploy -t free -p free-edition
    ```
-4. **Run** (streams the task states; `small` took about 19 minutes of task time on Free Edition, see below):
+4. **Run** (streams the task states; `small` takes about 12-15 minutes from start to finish on Free Edition,
+   because backtest and train run in parallel; see below):
    ```bash
    databricks bundle run demand_forecasting_pipeline -t free -p free-edition
    ```
@@ -44,6 +45,42 @@ Prerequisites: the [Databricks CLI](https://docs.databricks.com/aws/en/dev-tools
    ```bash
    databricks bundle destroy -t free -p free-edition
    ```
+
+If your CLI profile name contains spaces, quote it: `-p "Free Edition"`. `databricks auth profiles` lists
+your profiles and whether each login is still valid.
+
+## Running from VS Code (Databricks extension)
+
+The [Databricks extension](https://marketplace.visualstudio.com/items?itemName=databricks.databricks)
+deploys and runs the same bundle with one click. It needs two things the CLI route does not:
+
+1. **A workspace host on the target.** The extension only offers to sign in when the target has a
+   `workspace.host`, and `databricks.yml` deliberately commits none. Create the git-ignored file
+   `resources/workspace.local.yml` (the bundle's `include: resources/*.yml` picks it up):
+   ```yaml
+   targets:
+     free:
+       workspace:
+         host: https://<your-workspace>.cloud.databricks.com
+   ```
+   With it in place, CLI commands also work without `-p`: the CLI picks the profile whose host matches.
+2. **The repository root as the project folder.** Open the repository root in VS Code
+   (`code <path-to-repo>`). If the Databricks panel offers to *migrate* or *initialize* a project, or shows
+   `failed to initialize template, one or more files already exist: databricks.yml`, the extension is
+   pointed at a subfolder: press `Cmd+Shift+P`, run **Select a Databricks project folder**, and choose
+   the repository root.
+
+Then, in the Databricks panel (its logo in the Activity Bar):
+
+1. **Configuration**: check that *Target* is `free`, click **Login to Databricks**, and pick your CLI profile.
+2. **Bundle Resource Explorer** > **Jobs** > `demand-forecasting-pipeline`: click **▶** (deploy the bundle
+   and run the job). Task states update in the panel; **Databricks: Show bundle logs** has the full output.
+3. **Bundle Variables** changes `preset` and the other variables for the next deploy.
+
+The "Databricks Connect disabled" status-bar item is expected: the job runs entirely on serverless
+compute, so Databricks Connect is not used. To stop the extension from offering to rebuild `.venv` for
+Databricks Connect (the project's `.venv` is managed by `uv sync`), add
+`"databricks.python.environmentSetup": "manual"` to your `.vscode/settings.json`.
 
 ## Free Edition limits and how the design copes
 
@@ -83,7 +120,8 @@ Prerequisites: the [Databricks CLI](https://docs.databricks.com/aws/en/dev-tools
 | Pipeline end to end on local Spark 4.2 + Delta 4.4 (tiny in CI, small locally) | verified |
 | Wheel builds (`uv build --wheel`) | verified in CI |
 | `databricks bundle validate` / `deploy` | verified on Free Edition, 2026-10-23 |
-| Full job run, `small` preset, on Free Edition serverless | **verified, 2026-10-23** |
+| Full job run, `small` preset, on Free Edition serverless | **verified, 2026-10-23** (CLI: 15.4 min start to finish) |
+| Deploy and run from the VS Code extension (v2.22.0) | **verified, 2026-10-23** (11.9 min start to finish) |
 
 ### Measured run on Free Edition (`small` preset)
 
