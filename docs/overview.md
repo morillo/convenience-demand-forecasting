@@ -48,8 +48,9 @@ that the business can tune per category once the costs of waste and lost sales a
 
 ## What it is not (yet)
 The data is **synthetic**: a realistic simulation, not a real chain. The numbers show that the
-method and the pipeline work, not what a specific retailer would gain. It runs on a laptop
-today and is built to move to Databricks unchanged (see [databricks-migration.md](databricks-migration.md)).
+method and the pipeline work, not what a specific retailer would gain. It runs on a laptop,
+and the same code has run on Databricks Free Edition with the same results
+(see [databricks-migration.md](databricks-migration.md)).
 
 ## Where to go next
 * Run it: the [README](../README.md) quickstart.

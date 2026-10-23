@@ -125,6 +125,19 @@ def _plain_strings(df: DataFrame) -> DataFrame:
     )  # fmt: skip
 
 
+def cluster_columns_first(df: DataFrame, cluster_by: list[str]) -> DataFrame:
+    """Move the clustering columns to the front of the table.
+
+    Delta collects file statistics only for the first 32 columns by default, and liquid
+    clustering requires statistics on its clustering columns. Databricks enforces this
+    (DELTA_CLUSTERING_COLUMN_MISSING_STATS) for wide tables such as ``gold_features``, where
+    ``model_group`` would otherwise be column ~55. Open-source Delta does not, so the rule is
+    applied here for every clustered table.
+    """
+    rest = [c for c in df.columns if c not in cluster_by]
+    return df.select(*cluster_by, *rest)
+
+
 class TableStore:
     def __init__(self, spark: SparkSession, settings: Settings) -> None:
         self.spark = spark
@@ -148,6 +161,8 @@ class TableStore:
 
     def write(self, df: DataFrame, table: Table, *, cluster_by: list[str] | None = None) -> None:
         df = _plain_strings(df)
+        if cluster_by:
+            df = cluster_columns_first(df, cluster_by)
         writer = df.write.format("delta").mode("overwrite").option("overwriteSchema", "true")
         if cluster_by:
             # Liquid clustering: Delta co-locates rows with similar keys, so reads filtered by

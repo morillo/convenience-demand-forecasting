@@ -13,6 +13,7 @@ from pyspark.sql import functions as F
 from demand_forecasting.config import load_settings
 from demand_forecasting.pipeline import metrics, quality, replenish
 from demand_forecasting.pipeline.features import build_features
+from demand_forecasting.storage import cluster_columns_first
 
 D0 = dt.date(2024, 1, 1)
 
@@ -178,3 +179,9 @@ def test_safety_factor_calibration_and_default(spark: SparkSession) -> None:
     assert applied["snacks"]["order_up_to_level"] == pytest.approx(
         10.0 + 2.0 * applied["snacks"]["safety_factor"]
     )
+
+
+def test_clustering_columns_come_first_for_delta_stats(spark: SparkSession) -> None:
+    # Databricks requires stats on clustering columns; stats cover only the first 32 columns.
+    wide = spark.range(1).select(*[F.lit(i).alias(f"c{i}") for i in range(60)])
+    assert cluster_columns_first(wide, ["c55", "c3"]).columns[:3] == ["c55", "c3", "c0"]

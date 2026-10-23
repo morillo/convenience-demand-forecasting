@@ -28,8 +28,8 @@ Mirror the target as closely as a laptop allows, so "works locally" predicts "wo
   use-after-free when reading Arrow IPC *files* with pre-buffering. The pipeline never reads
   IPC files (Spark exchanges Arrow *streams*; tables are Parquet/Delta), serverless environment
   6 itself ships 21.0.0, and Spark's Python bridge depends on that exact build, so overriding it
-  would risk breaking pandas UDFs on Databricks. CI's dependency audit ignores only this ID; the
-  pin moves to the fixed version with the next serverless environment.
+  would risk breaking pandas UDFs on Databricks. CI's dependency audit and dependency review
+  ignore only this advisory; the pin moves to the fixed version with the next serverless environment.
 * **Same API**: local Spark runs behind **Spark Connect** (`SparkSession.builder.remote("local[*]")`),
   the only mode serverless supports. Code that would fail on serverless fails locally first.
 * **Same defaults**: ANSI SQL mode on, session time zone UTC.

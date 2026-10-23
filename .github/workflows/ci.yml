@@ -66,3 +66,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          # pyarrow 21.0.0 is pinned to match Databricks serverless; this advisory (same as
+          # PYSEC-2026-113 in the audit step) is an accepted risk, see docs/decisions/0001.
+          allow-ghsas: GHSA-rgxp-2hwp-jwgg

@@ -10,7 +10,7 @@ storage to Unity Catalog and tracking to the workspace MLflow.
 | Resource | Name (target `free`, development mode) |
 |---|---|
 | Unity Catalog schema | `workspace.dev_<you>_demand_forecasting` (dev mode prefixes your user name) |
-| MLflow experiment | `/Users/<you>/demand-forecasting-free` |
+| MLflow experiment | `/Users/<you>/[dev <you>] demand-forecasting-free` (dev mode prefixes the name) |
 | Job | `[dev <you>] demand-forecasting-pipeline`: generate, prepare, features, then backtest and train in parallel, then forecast |
 | Environment | serverless environment version 6 + the project wheel and its pinned dependencies |
 
@@ -33,7 +33,7 @@ Prerequisites: the [Databricks CLI](https://docs.databricks.com/aws/en/dev-tools
    ```bash
    databricks bundle deploy -t free -p free-edition
    ```
-4. **Run** (streams the task states; the serverless runtime for `small` has not been measured yet):
+4. **Run** (streams the task states; `small` took about 19 minutes of task time on Free Edition, see below):
    ```bash
    databricks bundle run demand_forecasting_pipeline -t free -p free-edition
    ```
@@ -54,7 +54,7 @@ Prerequisites: the [Databricks CLI](https://docs.databricks.com/aws/en/dev-tools
 | Max 5 concurrent job tasks | The job runs at most 2 tasks at once (backtest and train) |
 | Python UDF memory capped at 1 GB | Pre-flight check on model-group size; raise `forecast.store_buckets` if it fires |
 | UDFs have no internet access; no Maven/JAR libraries | Models travel inside tables; only pure-Python wheels |
-| Outbound internet limited to trusted domains | The job installs `lightgbm` and the other pinned packages from PyPI. **Not yet verified on Free Edition**; if blocked, use the workspace's PyPI mirror setting or upload the wheels to a volume |
+| Outbound internet limited to trusted domains | The job installs `lightgbm` and the other pinned packages from PyPI; **verified to work on Free Edition** (2026-10-23) |
 | No GPUs | Not needed: LightGBM trains on CPU |
 
 ## Scaling beyond the prototype (paid workspace)
@@ -81,7 +81,30 @@ Prerequisites: the [Databricks CLI](https://docs.databricks.com/aws/en/dev-tools
 | Check | Status |
 |---|---|
 | Pipeline end to end on local Spark 4.2 + Delta 4.4 (tiny in CI, small locally) | verified |
-| Spark Connect-only APIs (what serverless allows) | verified locally |
 | Wheel builds (`uv build --wheel`) | verified in CI |
-| `databricks bundle validate` | see the PR description for the latest result |
-| Deploy and run on Free Edition | **not yet run**: needs your workspace login (step 1) |
+| `databricks bundle validate` / `deploy` | verified on Free Edition, 2026-10-23 |
+| Full job run, `small` preset, on Free Edition serverless | **verified, 2026-10-23** |
+
+### Measured run on Free Edition (`small` preset)
+
+| Task | Duration | | Result | Local Mac | Free Edition |
+|---|---|---|---|---|---|
+| generate | 2 min 40 s | | WAPE vs true demand (LightGBM) | 0.593 | 0.594 |
+| prepare | 40 s | | WAPE vs true demand (moving average) | 0.636 | 0.636 |
+| features | 56 s | | Cycles without stockout (calibrated) | 95.3% | 95.1% |
+| backtest | 7 min 34 s | | Fill rate (calibrated) | 98.8% | 98.7% |
+| train | 6 min 29 s | | Series forecast | 2,348 | 2,348 |
+| forecast | 47 s | | | | |
+
+Baselines match exactly (same data); LightGBM differs in the third decimal because of floating-point
+differences between Apple Silicon and Databricks' Linux machines. Free Edition serverless runs these
+small tasks slower than a 16-core laptop (backtest 7.5 min vs 50 s locally): it allocates little compute per
+job, and environment start-up is included. That is fine for a nightly job and keeps quota use modest.
+
+### Issues the cloud run found (and fixes)
+* **Liquid clustering needs statistics on clustering columns**, and Delta only collects them for the first
+  32 columns. Databricks enforces this (`DELTA_CLUSTERING_COLUMN_MISSING_STATS`) on the wide
+  `gold_features` table; open-source Delta did not, so local tests passed. `TableStore.write` now puts
+  clustering columns first for every clustered table.
+* **Bundle resource keys must be unique across resource types** (`databricks bundle validate` caught a
+  schema and an experiment sharing a key).

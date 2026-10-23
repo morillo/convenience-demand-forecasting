@@ -1,12 +1,12 @@
 resources:
   schemas:
-    demand_forecasting:
+    pipeline_schema:
       catalog_name: ${var.catalog}
       name: ${var.schema}
       comment: Store x SKU demand forecasting pipeline (bronze_*, silver_*, gold_* tables).
 
   experiments:
-    demand_forecasting:
+    pipeline_experiment:
       name: /Users/${workspace.current_user.userName}/demand-forecasting-${bundle.target}
 
   jobs:
@@ -19,11 +19,11 @@ resources:
         - name: catalog
           default: ${var.catalog}
         - name: schema
-          default: ${resources.schemas.demand_forecasting.name}
+          default: ${resources.schemas.pipeline_schema.name}
         - name: preset
           default: ${var.preset}
         - name: experiment
-          default: ${resources.experiments.demand_forecasting.name}
+          default: ${resources.experiments.pipeline_experiment.name}
 
       environments:
         # Serverless environment 6 = Python 3.12, Spark 4.2 (Databricks Runtime 19).
