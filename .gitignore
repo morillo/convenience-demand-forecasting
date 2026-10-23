@@ -1,0 +1,25 @@
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Editors (per-machine settings stay local)
+.vscode/
+.idea/
+.DS_Store
+
+# Pipeline outputs (regenerate with `uv run dfc run-all`). Anchored with a leading "/" so they
+# never match source folders such as src/demand_forecasting/data/.
+/data/
+/spark-warehouse/
+/metastore_db/
+/derby.log
+/mlruns/
+
+# Databricks CLI / bundle state
+.databricks/
