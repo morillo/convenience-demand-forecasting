@@ -78,6 +78,31 @@ Before training, the pipeline checks that the largest group stays under `forecas
 
 ## Local vs. Databricks
 
+One codebase, two places to run it. GitHub CI checks every change before it can reach `main`;
+the same code then runs on a laptop through `uv`, or on Databricks as a wheel inside a serverless job.
+
+```mermaid
+flowchart LR
+    subgraph gh["GitHub"]
+        code["Code<br/>src/demand_forecasting"]
+        ci["CI on every PR<br/>lint, types, tests,<br/>tiny pipeline, wheel, audits"]
+        code --> ci
+    end
+    subgraph laptop["Laptop (profile: local)"]
+        cli["uv run dfc run-all"] --> sparkL["Spark 4.2 in local mode<br/>behind Spark Connect"]
+        sparkL --> deltaL[("Delta folders<br/>data/lake/")]
+        cli --> mlL[("MLflow<br/>data/mlflow.db")]
+        deltaL --> app["Streamlit viewer"]
+    end
+    subgraph dbx["Databricks (profile: databricks)"]
+        bundle["Asset Bundle<br/>databricks.yml"] --> job["Serverless job, env 6<br/>one task per step"]
+        job --> uc[("Unity Catalog<br/>catalog.schema.layer_table")]
+        job --> mlD[("Workspace MLflow<br/>experiment")]
+    end
+    code -- "git clone + uv sync" --> cli
+    code -- "uv build: wheel" --> bundle
+```
+
 | Concern | Local (`--profile local`) | Databricks (`--profile databricks`) |
 |---|---|---|
 | Spark | `local[*]` behind Spark Connect, Delta 4.4 jars from Maven Central | the job's serverless session |
