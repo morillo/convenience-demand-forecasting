@@ -4,6 +4,10 @@ A prototype that forecasts daily demand for **every product in every store** of 
 convenience-store chain, and turns those forecasts into **order recommendations**. It runs on a laptop
 with Spark, and the same code runs unchanged on **Databricks serverless** (verified on the Free Edition).
 
+**Results** (synthetic chain, `small` preset): forecast-driven ordering served **98.8% of demand vs 81.9%** for a
+moving-average policy and 90.5% for the incumbent, with **95.3% of ordering cycles stockout-free** (target 95%).
+Forecast bias vs true demand **-4.0% vs -12.9%** for the moving average. Trade-off: about 73% more stock on the shelf.
+
 * **New to the topic?** Start with [docs/overview.md](docs/overview.md), a plain-English summary with no jargon.
 * **Want the numbers?** See [docs/modeling.md#results](docs/modeling.md#results).
 
