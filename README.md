@@ -2,7 +2,7 @@
 
 A prototype that forecasts daily demand for **every product in every store** of a (simulated) global
 convenience-store chain, and turns those forecasts into **order recommendations**. It runs on a laptop
-with Spark and is built to move unchanged to **Databricks serverless** (including the Free Edition).
+with Spark, and the same code runs unchanged on **Databricks serverless** (verified on the Free Edition).
 
 * **New to the topic?** Start with [docs/overview.md](docs/overview.md), a plain-English summary with no jargon.
 * **Want the numbers?** See [docs/modeling.md#results](docs/modeling.md#results).
@@ -16,6 +16,22 @@ with Spark and is built to move unchanged to **Databricks serverless** (includin
 | Decision | Order-up-to policy with safety stock calibrated on the backtest |
 | Tracking | MLflow (local SQLite or the Databricks workspace) |
 | Deployment | Databricks Asset Bundle: one serverless job, one task per pipeline step |
+
+## How it works
+
+```mermaid
+flowchart LR
+    A["Store data<br/>sales, stock, orders,<br/>prices, promotions"] --> C
+    B["Outside signals<br/>calendar, holidays,<br/>weather forecast"] --> C
+    C["Clean daily history<br/>per store x product<br/>(empty shelves flagged)"] --> D
+    D["Learn demand patterns<br/>one model per<br/>country x aisle"] --> E
+    E["Forecast the next 14 days<br/>expected + high-but-plausible"] --> F
+    F["Order recommendation<br/>per store x product"]
+    D -. "first proven on 3 past dates<br/>against simple rules" .-> G["Backtest report<br/>accuracy, service level"]
+```
+
+The technical version, with every table, step and how the work is spread across machines, is in
+[docs/architecture.md](docs/architecture.md).
 
 ## Setup
 
@@ -116,7 +132,7 @@ serverless environment 6; bump them together, not one by one
 |---|---|
 | [docs/overview.md](docs/overview.md) | Everyone: the problem, the approach and the results in plain English |
 | [docs/glossary.md](docs/glossary.md) | Everyone: WAPE, P90, stockout, lead time... |
-| [docs/architecture.md](docs/architecture.md) | Engineers: data flow, code layout, how work is distributed |
+| [docs/architecture.md](docs/architecture.md) | Engineers: data-flow and deployment diagrams, code layout, how work is distributed |
 | [docs/mock-data.md](docs/mock-data.md) | Everyone: how the fake chain is built and what makes it realistic |
 | [docs/modeling.md](docs/modeling.md) | Data scientists: features, model, evaluation, replenishment, results |
 | [docs/data-dictionary.md](docs/data-dictionary.md) | Analysts: every table and column |
