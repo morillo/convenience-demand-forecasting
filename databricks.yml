@@ -1,0 +1,41 @@
+# Databricks Asset Bundle: deploys the same pipeline as a serverless job.
+# Guide: docs/databricks-migration.md
+#
+#   databricks bundle validate -t free -p <your-cli-profile>
+#   databricks bundle deploy   -t free -p <your-cli-profile>
+#   databricks bundle run demand_forecasting_pipeline -t free -p <your-cli-profile>
+#
+# No workspace URL is committed: the CLI profile (-p) says which workspace to use.
+bundle:
+  name: demand-forecasting
+
+include:
+  - resources/*.yml
+
+artifacts:
+  wheel:
+    type: whl
+    build: uv build --wheel
+    path: .
+
+variables:
+  catalog:
+    description: Unity Catalog catalog that holds the pipeline schema.
+    default: workspace
+  schema:
+    description: Schema for every pipeline table (dev mode prefixes it with your user name).
+    default: demand_forecasting
+  preset:
+    description: Mock data size (tiny | small | medium | large). Free Edition - keep to small or medium.
+    default: small
+
+targets:
+  # Databricks Free Edition (serverless only) or any personal dev workspace.
+  free:
+    mode: development
+    default: true
+  # A shared workspace with production settings: resources keep their names, runs as you.
+  prod:
+    mode: production
+    variables:
+      preset: medium

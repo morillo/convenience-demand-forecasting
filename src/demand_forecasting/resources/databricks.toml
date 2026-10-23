@@ -1,0 +1,17 @@
+# Profile "databricks": runs inside a Databricks job or notebook (serverless or classic).
+# Spark is the session Databricks provides, tables live in Unity Catalog, MLflow is the
+# workspace tracking server. catalog / schema / experiment are normally passed by the
+# Databricks Asset Bundle job (databricks.yml) as command-line overrides.
+
+[data]
+preset = "small"
+seed = 42
+
+[storage]
+mode = "catalog"
+catalog = "workspace"
+schema = "demand_forecasting"
+
+[mlflow]
+tracking_uri = "databricks"
+experiment = "/Shared/demand-forecasting"

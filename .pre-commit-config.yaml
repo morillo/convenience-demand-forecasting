@@ -1,0 +1,35 @@
+# Runs on every `git commit` (install once: `uv run pre-commit install`).
+# Same checks as CI, minus the slower Spark tests.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+        args: [--unsafe]  # databricks.yml uses YAML anchors; --unsafe only skips loading, not syntax checks
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.13.5
+    hooks:
+      - id: uv-lock  # uv.lock stays in sync with pyproject.toml
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.2
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+  - repo: local
+    hooks:
+      - id: pyright
+        name: pyright (same checker as VS Code Pylance)
+        entry: uv run pyright
+        language: system
+        types: [python]
+        pass_filenames: false
