@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      dev-tools:
+        dependency-type: development
+    # These versions deliberately mirror Databricks serverless environment 6 (see
+    # docs/decisions/0001-local-first-mirroring-serverless.md). Bump them together, by hand,
+    # when moving to a newer serverless environment version. MLflow is not listed: it
+    # follows security fixes instead.
+    ignore:
+      - dependency-name: pyspark
+      - dependency-name: delta-spark
+      - dependency-name: lightgbm
+      - dependency-name: numpy
+      - dependency-name: pandas
+      - dependency-name: pandas-stubs
+      - dependency-name: pyarrow
+      - dependency-name: scipy
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

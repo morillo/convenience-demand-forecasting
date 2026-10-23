@@ -1,0 +1,14 @@
+<!--
+  Ivy settings for resolving the Delta Lake jars when Spark starts locally.
+  Spark's default chain also reads ~/.m2, where a half-downloaded artifact (POM without its jar)
+  makes startup fail. This resolves only from Maven Central into a dedicated cache
+  (~/.cache/demand-forecasting/ivy, or $DF_IVY_DIR), so every machine and CI runner gets the
+  same result.
+-->
+<ivysettings>
+  <settings defaultResolver="central"/>
+  <caches defaultCacheDir="${ivy.home}/cache"/>
+  <resolvers>
+    <ibiblio name="central" m2compatible="true" root="https://repo1.maven.org/maven2/"/>
+  </resolvers>
+</ivysettings>

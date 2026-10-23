@@ -1,0 +1,21 @@
+# Profile "local": runs everything on this machine.
+# Spark runs in local mode behind Spark Connect (same client API as Databricks serverless),
+# tables are Delta folders under data_dir, and MLflow tracks into a SQLite file.
+
+[data]
+preset = "small"   # tiny | small | medium | large  (see docs/mock-data.md)
+seed = 42
+
+[storage]
+mode = "path"      # "path": Delta folders on disk | "catalog": Unity Catalog tables
+data_dir = "data"  # relative to the current working directory (run commands from the repo root)
+
+[spark]
+master = "local[*]"
+driver_memory = "8g"
+
+[mlflow]
+# {data_dir} is replaced by storage.data_dir, so --data-dir moves the MLflow files too.
+tracking_uri = "sqlite:///{data_dir}/mlflow.db"
+artifact_location = "{data_dir}/mlruns"
+experiment = "demand-forecasting"

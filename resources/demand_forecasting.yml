@@ -1,0 +1,79 @@
+resources:
+  schemas:
+    pipeline_schema:
+      catalog_name: ${var.catalog}
+      name: ${var.schema}
+      comment: Store x SKU demand forecasting pipeline (bronze_*, silver_*, gold_* tables).
+
+  experiments:
+    pipeline_experiment:
+      name: /Users/${workspace.current_user.userName}/demand-forecasting-${bundle.target}
+
+  jobs:
+    demand_forecasting_pipeline:
+      name: demand-forecasting-pipeline
+      description: generate -> prepare -> features -> (backtest, train) -> forecast. Same entry point as `uv run dfc` locally.
+      max_concurrent_runs: 1
+      # Change these in the UI ("Run now with different parameters") without redeploying.
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: schema
+          default: ${resources.schemas.pipeline_schema.name}
+        - name: preset
+          default: ${var.preset}
+        - name: experiment
+          default: ${resources.experiments.pipeline_experiment.name}
+
+      environments:
+        # Serverless environment 6 = Python 3.12, Spark 4.2 (Databricks Runtime 19).
+        # The local `uv` environment pins the same library versions (docs/decisions/0001).
+        - environment_key: default
+          spec:
+            environment_version: "6"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: generate
+          environment_key: default
+          python_wheel_task: &step
+            package_name: demand_forecasting
+            entry_point: dfc
+            parameters: [generate, --profile, databricks, --catalog, "{{job.parameters.catalog}}", --schema, "{{job.parameters.schema}}", --preset, "{{job.parameters.preset}}", --experiment, "{{job.parameters.experiment}}"]
+
+        - task_key: prepare
+          depends_on: [{task_key: generate}]
+          environment_key: default
+          python_wheel_task:
+            <<: *step
+            parameters: [prepare, --profile, databricks, --catalog, "{{job.parameters.catalog}}", --schema, "{{job.parameters.schema}}", --preset, "{{job.parameters.preset}}", --experiment, "{{job.parameters.experiment}}"]
+
+        - task_key: features
+          depends_on: [{task_key: prepare}]
+          environment_key: default
+          python_wheel_task:
+            <<: *step
+            parameters: [features, --profile, databricks, --catalog, "{{job.parameters.catalog}}", --schema, "{{job.parameters.schema}}", --preset, "{{job.parameters.preset}}", --experiment, "{{job.parameters.experiment}}"]
+
+        - task_key: backtest
+          depends_on: [{task_key: features}]
+          environment_key: default
+          python_wheel_task:
+            <<: *step
+            parameters: [backtest, --profile, databricks, --catalog, "{{job.parameters.catalog}}", --schema, "{{job.parameters.schema}}", --preset, "{{job.parameters.preset}}", --experiment, "{{job.parameters.experiment}}"]
+
+        - task_key: train
+          depends_on: [{task_key: features}]
+          environment_key: default
+          python_wheel_task:
+            <<: *step
+            parameters: [train, --profile, databricks, --catalog, "{{job.parameters.catalog}}", --schema, "{{job.parameters.schema}}", --preset, "{{job.parameters.preset}}", --experiment, "{{job.parameters.experiment}}"]
+
+        # Needs both: the models (train) and the safety-stock calibration (backtest).
+        - task_key: forecast
+          depends_on: [{task_key: train}, {task_key: backtest}]
+          environment_key: default
+          python_wheel_task:
+            <<: *step
+            parameters: [forecast, --profile, databricks, --catalog, "{{job.parameters.catalog}}", --schema, "{{job.parameters.schema}}", --preset, "{{job.parameters.preset}}", --experiment, "{{job.parameters.experiment}}"]
