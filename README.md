@@ -107,6 +107,9 @@ databricks bundle deploy   -t free -p free-edition
 databricks bundle run demand_forecasting_pipeline -t free -p free-edition
 ```
 
+To deploy and run from VS Code instead, the Databricks extension needs a git-ignored
+`resources/workspace.local.yml` with your workspace host; see
+[Running from VS Code](docs/databricks-migration.md#running-from-vs-code-databricks-extension).
 The Free Edition limits and how the design handles them, what the bundle creates, scaling to a full
 chain, and what has been verified so far are in [docs/databricks-migration.md](docs/databricks-migration.md).
 
